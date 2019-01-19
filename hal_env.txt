@@ -1,0 +1,5 @@
+export PATH=/home/spinnaker:$PATH
+
+ENDPOINT=http://minio-eating-tiger.default:9000
+MINIO_ACCESS_KEY=miniokey
+MINIO_SECRET_KEY=miniosecret

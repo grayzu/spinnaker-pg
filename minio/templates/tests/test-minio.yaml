@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ printf "minio-test-%s" .Release.Name | trunc 55 | trimSuffix "-" }}
+  annotations:
+    helm.sh/hook: test-success
+spec:
+  containers:
+    - name: minio-test
+      image: viglesiasce/minio-client:v0.4.0
+      imagePullPolicy: IfNotPresent
+      command:
+        - bash
+        - -cx
+        - |
+          bucket="test-{{ randAlphaNum 10 | lower }}"
+          mc config host add {{ template "minio.fullname" . }} http://{{ template "minio.fullname" . }}:{{ .Values.port }} {{ .Values.accessKey }} {{ .Values.secretKey }} S3v4
+
+          success=0
+          for i in $(seq 1 20); do
+            mc admin service status {{ template "minio.fullname" . }}
+            mc mb {{ template "minio.fullname" . }}/$bucket
+            mc rm {{ template "minio.fullname" . }}/$bucket
+            if [ $? -eq 0 ]; then
+              success=1
+              break
+            fi
+            sleep 5
+          done
+          if [ ${success} -eq 0 ]; then
+            exit 1
+          fi
+  restartPolicy: Never
